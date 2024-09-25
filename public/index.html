@@ -1,0 +1,75 @@
+<!-- ASL Avatar in Teams Tab (React or HTML + JS) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASL Avatar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+</head>
+<body>
+    <div id="avatar-container"></div>
+
+    <script>
+        // Load the 3D avatar
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('avatar-container').appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(0, 1, 1).normalize();
+        scene.add(light);
+
+        // Load avatar model (e.g., in GLTF format)
+        const loader = new THREE.GLTFLoader();
+        loader.load('/avatar.gltf', function (gltf) {
+            const avatar = gltf.scene;
+            scene.add(avatar);
+            camera.position.z = 5;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                renderer.render(scene, camera);
+            }
+            animate();
+        });
+
+        // Function to map transcribed text to ASL gestures
+        function displayASLGesture(transcribedText) {
+            switch (transcribedText.toLowerCase()) {
+                case 'hello':
+                    // Trigger avatar's 'hello' ASL gesture
+                    avatar.animations.play('helloGesture');
+                    break;
+                case 'thank you':
+                    avatar.animations.play('thankYouGesture');
+                    break;
+                default:
+                    avatar.animations.play('idle');
+            }
+        }
+
+
+        async function sendAudioToBackend(audioStream) {
+            try {
+                const response = await fetch('http://localhost:3000/convert-audio', {
+                    method: 'POST',
+                    body: JSON.stringify({ audioStream }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const data = await response.json();
+                displayASLGesture(data.transcribedText); // Trigger ASL gesture
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
